@@ -10,7 +10,8 @@ const REMOVE_BG_API_KEY = "DLH1WrF957mHS5De65HWmEad";
 // 2. Photoroom API Keys Rotation (Pro Model)
 const PHOTOROOM_KEYS = [
   "sk_pr_default_2517d141e809c9e93d9986e55a456dcafa2359c3",
-  "sk_pr_default_8a4b46802172847b72b9e7a79a9b56e1ea353f06"
+  "sk_pr_default_8a4b46802172847b72b9e7a79a9b56e1ea353f06",
+  "sk_pr_default_adfe49f942200e04910b58c6f38f67caa5c0072e"
 ];
 
 let activePrKeyIndex = 0;
