@@ -1,10 +1,16 @@
+export const config = {
+  api: {
+    bodyParser: false, // Large files ko directly stream karne ke liye
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const HF_TOKEN = process.env.HF_TOKEN || "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";
-  const MODEL_URL = "https://api-inference.huggingface.co/models/ZhengPeng7/BiRefNet";
+  const HF_TOKEN = process.env.HF_TOKEN || "hf_rqrGWfFkSzBNCQhneRYXhQefryeWGHFWj";
+  const MODEL_URL = "https://router.huggingface.co/hf-inference/models/ZhengPeng7/BiRefNet";
 
   try {
     const chunks = [];
@@ -33,4 +39,3 @@ export default async function handler(req, res) {
     return res.status(500).send(error.message);
   }
 }
-
