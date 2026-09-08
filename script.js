@@ -46,7 +46,7 @@ function verifyProCode() {
   const code = document.getElementById('proCodeInput').value.trim();
   const errorMsg = document.getElementById('codeError');
   
-  if (code === '7509VG') {
+  if (code === 'RADHESHYAM') {
     isProVerified = true;
     errorMsg.classList.add('hidden');
     document.getElementById('proModal').classList.add('hidden');
@@ -140,7 +140,7 @@ async function runPhotoroomCall() {
     const response = await fetch('https://sdk.photoroom.com/v1/segment', {
       method: 'POST',
       headers: {
-        'x-api-key': 'sandbox_sk_pr_vgdesigner7509_716eea600332baa214121f7dc65f6e3442873e86'
+        'x-api-key': 'sk_pr_vgdesigner7509_716eea600332baa214121f7dc65f6e3442873e86'
       },
       body: formData
     });
