@@ -4,7 +4,6 @@ let selectedFile = null;
 let processedImageUrl = null;
 
 // ================= SECURE VERCEL BACKEND API =================
-// Browser direct Hugging Face ko hit nahi karega, Vercel Serverless Function handle karega
 const BIREFNET_API_URL = "/api/remove-bg";
 // =============================================================
 
@@ -147,6 +146,43 @@ slider.addEventListener('input', (e) => {
   beforeWrapper.style.width = `${e.target.value}%`;
 });
 
+// Auto-Compress / Resize helper (Large Photos & DSLR bypass)
+function resizeImageBeforeUpload(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1920; // Crisp Full HD maximum edge
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', 0.92);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // Process Trigger
 function handleGenerate() {
   if (!selectedFile) {
@@ -182,15 +218,18 @@ async function startRemovalProcess() {
   btnGenerate.disabled = true;
 
   try {
+    // 25MB+ badi photos ko automatically safe payload me optimize karega
+    const uploadPayload = await resizeImageBeforeUpload(selectedFile);
+
     const res = await fetch(BIREFNET_API_URL, {
       method: "POST",
-      body: selectedFile
+      body: uploadPayload
     });
 
     if (!res.ok) {
       const errText = await res.text();
       if (res.status === 503) {
-        throw new Error('BiRefNet AI model load ho raha hai... 20-30 second baad dobara try karein.');
+        throw new Error('BiRefNet AI model start ho raha hai... 20-30 second baad dobara try karein.');
       }
       throw new Error(`AI Process Error (${res.status}): ${errText}`);
     }
