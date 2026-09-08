@@ -9,11 +9,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Aapka token jo abhi banaya hai
-  const HF_TOKEN = "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";
+  // Yahan apna naya fine-grained token paste karein
+  const HF_TOKEN = process.env.HF_TOKEN || "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";
   
-  // Official supported background removal endpoint
-  const MODEL_URL = "https://api-inference.huggingface.co/models/briaai/RMBG-1.4";
+  // Official Hugging Face inference router URL
+  const MODEL_URL = "https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4";
 
   try {
     const chunks = [];
@@ -25,7 +25,9 @@ export default async function handler(req, res) {
     const response = await fetch(MODEL_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${HF_TOKEN}`
+        "Authorization": `Bearer ${HF_TOKEN}`,
+        "Content-Type": "application/octet-stream",
+        "x-use-cache": "false"
       },
       body: buffer
     });
@@ -39,6 +41,6 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'image/png');
     return res.status(200).send(Buffer.from(arrayBuffer));
   } catch (error) {
-    return res.status(500).send(error.message);
+    return res.status(500).send(`HF Connection Error: ${error.message}`);
   }
 }
