@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VGREMOVER - Normal User Engine</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-default">
+
+  <!-- Header -->
+  <header class="navbar">
+    <div class="logo">VGREMOVER <span style="font-size: 0.8rem; color: #38bdf8;">(Normal User)</span></div>
+    <div class="header-right">
+      <a href="index.html" class="normal-user-link" style="background: #334155;">🏠 Main App</a>
+    </div>
+  </header>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="badge credits-badge">Powered by Remove.bg Engine</div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    <!-- Upload Box -->
+    <div id="dropZoneNormal" class="upload-box">
+      <div class="upload-content">
+        <svg class="cloud-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <h3>Drag & Drop your photo here</h3>
+        <p>Supports: JPG, JPEG, PNG, WEBP</p>
+        <label class="btn-browse">
+          Browse Files
+          <input type="file" id="fileInputNormal" accept="image/*" hidden />
+        </label>
+      </div>
+    </div>
+
+    <!-- Generate Action -->
+    <div class="action-wrap">
+      <button id="btnGenerateNormal" class="btn-action" onclick="handleGenerateNormal()" disabled>
+        ✨ Remove Background
+      </button>
+    </div>
+
+    <!-- Loader -->
+    <div id="processLoaderNormal" class="loader hidden">
+      <div class="spinner"></div>
+      <span>Processing with VG DESIGNER AI...</span>
+    </div>
+
+    <!-- Comparison Section -->
+    <div id="comparisonBoxNormal" class="comparison-container hidden">
+      <div class="image-wrapper">
+        <img id="imgAfterNormal" alt="Processed Output" />
+        <div id="beforeWrapperNormal" class="before-wrapper">
+          <img id="imgBeforeNormal" alt="Original Image" />
+        </div>
+        <input type="range" id="compareSliderNormal" min="0" max="100" value="50" class="slider" />
+      </div>
+
+      <div class="download-wrap">
+        <button id="btnDownloadNormal" class="btn-download hidden" onclick="handleDownloadNormal()">
+          ⬇ Download Transparent PNG
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ================= REMOVE.BG API KEY =================
+    const REMOVE_BG_API_KEY = "REMOVE_BG_PAST_API_KEY";
+    // ====================================================
+
+    let selectedNormalFile = null;
+    let processedNormalUrl = null;
+
+    const fileInputNormal = document.getElementById('fileInputNormal');
+    const dropZoneNormal = document.getElementById('dropZoneNormal');
+    const btnGenerateNormal = document.getElementById('btnGenerateNormal');
+
+    fileInputNormal.addEventListener('change', (e) => {
+      if (e.target.files.length) handleNormalFile(e.target.files[0]);
+    });
+
+    dropZoneNormal.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZoneNormal.classList.add('dragover');
+    });
+
+    dropZoneNormal.addEventListener('dragleave', () => {
+      dropZoneNormal.classList.remove('dragover');
+    });
+
+    dropZoneNormal.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZoneNormal.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleNormalFile(e.dataTransfer.files[0]);
+    });
+
+    function handleNormalFile(file) {
+      selectedNormalFile = file;
+      btnGenerateNormal.disabled = false;
+      btnGenerateNormal.innerText = '✨ Remove Background';
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('imgBeforeNormal').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    const sliderNormal = document.getElementById('compareSliderNormal');
+    const beforeWrapperNormal = document.getElementById('beforeWrapperNormal');
+    sliderNormal.addEventListener('input', (e) => {
+      beforeWrapperNormal.style.width = `${e.target.value}%`;
+    });
+
+    async function handleGenerateNormal() {
+      if (!selectedNormalFile) return;
+
+      const loader = document.getElementById('processLoaderNormal');
+      loader.classList.remove('hidden');
+      btnGenerateNormal.disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('image_file', selectedNormalFile);
+        formData.append('size', 'auto');
+
+        const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+          method: 'POST',
+          headers: {
+            'X-Api-Key': REMOVE_BG_API_KEY
+          },
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Remove.bg Error (${res.status}): ${errText}`);
+        }
+
+        const blob = await res.blob();
+        processedNormalUrl = URL.createObjectURL(blob);
+
+        document.getElementById('imgAfterNormal').src = processedNormalUrl;
+        document.getElementById('comparisonBoxNormal').classList.remove('hidden');
+        document.getElementById('btnDownloadNormal').classList.remove('hidden');
+
+      } catch (err) {
+        alert('Processing Error: ' + err.message);
+      } finally {
+        loader.classList.add('hidden');
+        btnGenerateNormal.disabled = false;
+      }
+    }
+
+    function handleDownloadNormal() {
+      if (!processedNormalUrl) return;
+      const link = document.createElement('a');
+      link.href = processedNormalUrl;
+      link.download = 'VGREMOVER_normal.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
