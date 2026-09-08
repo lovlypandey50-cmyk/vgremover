@@ -9,11 +9,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Yahan apna naya fine-grained token paste karein
-  const HF_TOKEN = process.env.HF_TOKEN || "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";
+  // Token Vercel environment se uthayega
+  const HF_TOKEN = process.env.HF_TOKEN;
   
-  // Official Hugging Face inference router URL
-  const MODEL_URL = "https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4";
+  // High quality crisp edge model
+  const MODEL_URL = "https://api-inference.huggingface.co/models/ZhengPeng7/BiRefNet";
 
   try {
     const chunks = [];
@@ -26,8 +26,7 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${HF_TOKEN}`,
-        "Content-Type": "application/octet-stream",
-        "x-use-cache": "false"
+        "Content-Type": "application/octet-stream"
       },
       body: buffer
     });
@@ -41,6 +40,6 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'image/png');
     return res.status(200).send(Buffer.from(arrayBuffer));
   } catch (error) {
-    return res.status(500).send(`HF Connection Error: ${error.message}`);
+    return res.status(500).send(error.message);
   }
 }
