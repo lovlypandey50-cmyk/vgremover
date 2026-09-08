@@ -136,8 +136,8 @@ async function runPhotoroomCall() {
     const formData = new FormData();
     formData.append('image_file', selectedFile);
 
-    // Direct call to Photoroom API
-    const response = await fetch('https://image-api.photoroom.com/v2/edit', {
+    // Standard Photoroom background removal endpoint
+    const response = await fetch('https://sdk.photoroom.com/v1/segment', {
       method: 'POST',
       headers: {
         'x-api-key': 'sk_pr_default_e61d13f2d3867d624ead738c195f66c6ecb232d1'
@@ -146,9 +146,9 @@ async function runPhotoroomCall() {
     });
 
     if (!response.ok) {
-      const errData = await response.text();
-      console.error(errData);
-      throw new Error('API request failed');
+      const errText = await response.text();
+      console.error('API Error:', errText);
+      throw new Error(`Status ${response.status}: ${errText}`);
     }
 
     const blob = await response.blob();
