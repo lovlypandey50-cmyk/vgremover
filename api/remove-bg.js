@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const HF_TOKEN = process.env.HF_TOKEN || "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";
+  const HF_TOKEN = process.env.HF_TOKEN || "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";
   const MODEL_URL = "https://router.huggingface.co/hf-inference/models/ZhengPeng7/BiRefNet";
 
   try {
