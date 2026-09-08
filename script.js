@@ -140,7 +140,7 @@ async function runPhotoroomCall() {
     const response = await fetch('https://sdk.photoroom.com/v1/segment', {
       method: 'POST',
       headers: {
-        'x-api-key': 'sk_pr_default_e61d13f2d3867d624ead738c195f66c6ecb232d1'
+        'x-api-key': 'sandbox_sk_pr_vgdesigner7509_716eea600332baa214121f7dc65f6e3442873e86'
       },
       body: formData
     });
