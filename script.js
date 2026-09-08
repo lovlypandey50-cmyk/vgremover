@@ -5,12 +5,12 @@ let processedImageUrl = null;
 
 // ================= API KEYS CONFIGURATION =================
 // 1. Pixelcut API Key (Basic Model ke liye)
-const PIXELCUT_API_KEY = "PIXELCUT_PAST_API_KEY";
+const PIXELCUT_API_KEY = "sk_d885ea66a47349feaba35dbb6212d077sk_d885ea66a47349feaba35dbb6212d077";
 
 // 2. Photoroom 2 API Keys Rotation (Pro Model ke liye)
 const PHOTOROOM_KEYS = [
-  "PHOTOROOM_PAST_API_KEY",
-  "PHOTOROOM_PAST_API_KEY"
+  "sk_pr_default_2517d141e809c9e93d9986e55a456dcafa2359c3",
+  "sk_pr_default_8a4b46802172847b72b9e7a79a9b56e1ea353f06"
 ];
 
 let activePrKeyIndex = 0;
