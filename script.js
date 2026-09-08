@@ -113,7 +113,7 @@ function handleGenerate() {
       alert('Aapke pas credits khatam ho gaye hain! Kal 20 naye credits milenge ya Pro model unlock karein.');
       return;
     }
-    // Trigger ad popup before or with processing
+    // Trigger ad popup before processing
     document.getElementById('adModal').classList.remove('hidden');
   } else {
     runPhotoroomCall();
@@ -136,18 +136,25 @@ async function runPhotoroomCall() {
     const formData = new FormData();
     formData.append('image_file', selectedFile);
 
-    // Call Netlify function to keep Photoroom API key hidden
-    const response = await fetch('/.netlify/functions/photoroom', {
+    // Direct call to Photoroom API
+    const response = await fetch('https://image-api.photoroom.com/v2/edit', {
       method: 'POST',
+      headers: {
+        'x-api-key': 'sk_pr_default_e61d13f2d3867d624ead738c195f66c6ecb232d1'
+      },
       body: formData
     });
 
-    if (!response.ok) throw new Error('Failed to process image');
+    if (!response.ok) {
+      const errData = await response.text();
+      console.error(errData);
+      throw new Error('API request failed');
+    }
 
     const blob = await response.blob();
     processedImageUrl = URL.createObjectURL(blob);
 
-    // Update after image
+    // Result display
     document.getElementById('imgAfter').src = processedImageUrl;
     document.getElementById('comparisonBox').classList.remove('hidden');
     document.getElementById('btnDownload').classList.remove('hidden');
@@ -160,7 +167,7 @@ async function runPhotoroomCall() {
     }
 
   } catch (err) {
-    alert('Processing error: API issue ya invalid file format.');
+    alert('Processing error: ' + err.message);
   } finally {
     loader.classList.add('hidden');
     btnGenerate.disabled = false;
