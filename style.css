@@ -162,7 +162,19 @@ body {
   background: #334155;
 }
 
-/* ACTION BUTTON - ELECTRIC BLUE */
+.upload-success-text {
+  margin-top: 14px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid #059669;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  display: inline-block;
+  word-break: break-all;
+}
+
+/* ACTION BUTTON */
 .action-wrap {
   width: 100%;
 }
@@ -223,7 +235,7 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* COMPARISON BOX */
+/* COMPARISON SECTION */
 .comparison-container {
   display: flex;
   flex-direction: column;
@@ -323,7 +335,122 @@ body {
   font-size: 0.85rem;
 }
 
-/* MODAL */
+/* ============================================================ */
+/* FEATURES SECTION (Headline + 4 Modern Cards)                 */
+/* ============================================================ */
+.features-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.features-headline {
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-align: center;
+  color: #f8fafc;
+  line-height: 1.4;
+  letter-spacing: -0.3px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.feature-box {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.2s ease;
+}
+
+.feature-box:hover {
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+}
+
+.box-num {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.feature-box h4 {
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.feature-box p {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.features-subtext {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* ============================================================ */
+/* FOOTER SECTION                                              */
+/* ============================================================ */
+.app-footer {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.footer-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.footer-block p {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.support-link {
+  color: #38bdf8;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.support-link:hover {
+  text-decoration: underline;
+}
+
+.footer-note {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+  border-top: 1px solid #1f2937;
+  padding-top: 8px;
+}
+
+/* MODALS */
 .modal {
   position: fixed;
   inset: 0;
@@ -344,16 +471,8 @@ body {
   text-align: center;
 }
 
-.modal-box h3 {
-  margin-bottom: 8px;
-}
-
-.modal-box p {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin-bottom: 16px;
-}
-
+.modal-box h3 { margin-bottom: 8px; }
+.modal-box p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 16px; }
 .modal-box input {
   width: 100%;
   padding: 12px;
@@ -365,30 +484,10 @@ body {
   text-align: center;
   font-size: 1rem;
 }
-
-.modal-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.btn-secondary {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  padding: 10px;
-  cursor: pointer;
-}
-
-.error-text {
-  color: #ef4444;
-  font-size: 0.85rem;
-  margin-bottom: 10px;
-}
-
-.hidden {
-  display: none !important;
-}
+.modal-actions { display: flex; flex-direction: column; gap: 8px; }
+.btn-secondary { background: transparent; border: none; color: #94a3b8; padding: 10px; cursor: pointer; }
+.error-text { color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; }
+.hidden { display: none !important; }
 
 /* ============================================================ */
 /* 👑 PRO GOLDEN THEME (Applied fully when Pro Model is Active) */
@@ -447,6 +546,25 @@ body.theme-pro .loader {
 body.theme-pro .spinner {
   border-color: #2a2007;
   border-top-color: #fbbf24;
+}
+
+body.theme-pro .feature-box {
+  background: #171307;
+  border-color: #3b2c09;
+}
+
+body.theme-pro .box-num {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+}
+
+body.theme-pro .app-footer {
+  background: #171307;
+  border-color: #3b2c09;
+}
+
+body.theme-pro .support-link {
+  color: #fbbf24;
 }
 
 .modal-gold {
