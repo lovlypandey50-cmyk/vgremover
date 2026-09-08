@@ -9,9 +9,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Aapka token jo abhi banaya hai
   const HF_TOKEN = "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";
   
-  // Official & supported serverless background removal model
+  // Official supported background removal endpoint
   const MODEL_URL = "https://api-inference.huggingface.co/models/briaai/RMBG-1.4";
 
   try {
