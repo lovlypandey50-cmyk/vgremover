@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VGREMOVER - AI Background Remover</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo">VG<span>REMOVER</span></div>
+    <div class="model-switch">
+      <button id="basicTab" class="active" onclick="switchModel('basic')">Basic Model</button>
+      <button id="proTab" onclick="switchModel('pro')">Pro Model</button>
+    </div>
+  </header>
+
+  <!-- Credit Info / Status -->
+  <section class="status-bar">
+    <div id="creditDisplay" class="credit-badge">Daily Credits: <span id="creditCount">20</span>/20</div>
+    <div id="proBadge" class="pro-badge hidden">PRO UNLIMITED ACCESS</div>
+  </section>
+
+  <!-- Passcode Modal for PRO -->
+  <div id="proModal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Enter Pro Passcode</h3>
+      <p>Enter the verification code to unlock unlimited access:</p>
+      <input type="password" id="proCodeInput" placeholder="Enter Access Code">
+      <div id="codeError" class="error-text hidden">Invalid Code! Please try again.</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="cancelPro()">Cancel</button>
+        <button class="btn-verify" onclick="verifyProCode()">Unlock Pro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ad 1: Popup Modal triggered on Basic model generate -->
+  <div id="adModal" class="modal hidden">
+    <div class="ad-popup-box">
+      <button class="ad-close-btn" onclick="closeAdModal()">&times; Close Ad</button>
+      <div class="ad-content-slot">
+        <!-- Google AdSense ya Network Ad Script Code Yahan Paste Hoga -->
+        <p class="ad-title">SPONSORED AD</p>
+        <div class="dummy-ad-box">Your Ad Unit Code (300x250 / Responsive)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+    
+    <!-- Upload Dropzone -->
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept="image/jpeg, image/jpg, image/png, image/webp, .zip" hidden>
+      <div class="drop-content" onclick="document.getElementById('fileInput').click()">
+        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        <h4>Drag & Drop your photo here</h4>
+        <p>Supports: JPG, JPEG, PNG, WEBP, ZIP</p>
+        <span class="btn-browse">Browse Files</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button id="btnGenerate" class="btn-primary" disabled onclick="handleGenerate()">Remove Background</button>
+      <button id="btnDownload" class="btn-secondary hidden" onclick="handleDownload()">Download Result</button>
+    </div>
+
+    <div id="processLoader" class="loader hidden">Processing with Photoroom AI...</div>
+
+    <!-- Before / After Slider -->
+    <div id="comparisonBox" class="comparison-container hidden">
+      <div class="slider-wrapper">
+        <img id="imgAfter" class="image-after" alt="After Removal">
+        <div id="beforeWrapper" class="image-before-wrapper">
+          <img id="imgBefore" class="image-before" alt="Before Removal">
+        </div>
+        <input type="range" min="0" max="100" value="50" class="slider" id="compareSlider">
+      </div>
+      <div class="slider-labels">
+        <span>Original</span>
+        <span>Background Removed</span>
+      </div>
+    </div>
+
+    <!-- Feedback (Like/Unlike) -->
+    <section class="feedback-card">
+      <p>Was this result helpful?</p>
+      <div class="feedback-btns">
+        <button onclick="handleVote('like')" class="vote-btn">👍 Like (<span id="likeCount">142</span>)</button>
+        <button onclick="handleVote('unlike')" class="vote-btn">👎 Unlike (<span id="unlikeCount">3</span>)</button>
+      </div>
+    </section>
+
+    <!-- Bottom Ad Space -->
+    <div class="ad-banner-slot">
+      <span class="ad-tag">Advertisement</span>
+      <div class="ad-banner-box">
+        <!-- Ad 2 Banner Script Yahan Paste Karein -->
+        <p>Responsive Banner Ad Space (728x90 / Banner)</p>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <section class="features-section">
+      <h2>Smart AI Background Removal with Natural Edges</h2>
+      <div class="feature-grid">
+        <div class="feature-box">1. Product Photo</div>
+        <div class="feature-box">2. Picture Photo</div>
+        <div class="feature-box">3. E-commerce Listing</div>
+        <div class="feature-box">4. Marketing Materials</div>
+      </div>
+      <p class="tagline">VGremover makes background editing fast and professional.</p>
+    </section>
+
+    <!-- Placeholder Section For Your Custom Images -->
+    <section class="gallery-placeholder" id="customGallery">
+      <!-- Aapki custom images baad me yahan dalengi -->
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p><strong>About:</strong> VG DESIGNER</p>
+    <p><strong>Help & Support:</strong> <a href="mailto:mr.vikash11997@gmail.com">mr.vikash11997@gmail.com</a></p>
+    <div class="copyright">Thanks for visit!</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
