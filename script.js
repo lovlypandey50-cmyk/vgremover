@@ -3,6 +3,19 @@ let isProVerified = false;
 let selectedFile = null;
 let processedImageUrl = null;
 
+// ================= API KEYS CONFIGURATION =================
+// 1. Pixelcut API Key (Basic Model ke liye)
+const PIXELCUT_API_KEY = "PIXELCUT_PAST_API_KEY";
+
+// 2. Photoroom 2 API Keys Rotation (Pro Model ke liye)
+const PHOTOROOM_KEYS = [
+  "PHOTOROOM_PAST_API_KEY",
+  "PHOTOROOM_PAST_API_KEY"
+];
+
+let activePrKeyIndex = 0;
+// ==========================================================
+
 // Daily credit reset system (Localstorage)
 const getDailyCredits = () => {
   const today = new Date().toISOString().slice(0, 10);
@@ -16,9 +29,27 @@ const getDailyCredits = () => {
 };
 
 let credits = getDailyCredits();
-document.getElementById('creditCount').innerText = credits;
+const creditCountEl = document.getElementById('creditCount');
+if (creditCountEl) creditCountEl.innerText = credits;
 
-// Switch Model
+// 24-Hour Pro Status Check on Page Load/Refresh
+function checkProStatus() {
+  const proExpiry = localStorage.getItem('vg_pro_expiry');
+  if (proExpiry) {
+    const now = new Date().getTime();
+    if (now < parseInt(proExpiry, 10)) {
+      isProVerified = true;
+      setModeUI('pro');
+      return;
+    } else {
+      localStorage.removeItem('vg_pro_expiry');
+      isProVerified = false;
+    }
+  }
+  setModeUI('basic');
+}
+
+// Switch UI Logic
 function switchModel(mode) {
   if (mode === 'pro' && !isProVerified) {
     document.getElementById('proModal').classList.remove('hidden');
@@ -31,23 +62,28 @@ function setModeUI(mode) {
   currentModel = mode;
   document.getElementById('basicTab').classList.toggle('active', mode === 'basic');
   document.getElementById('proTab').classList.toggle('active', mode === 'pro');
-  
+
   if (mode === 'pro') {
+    document.body.classList.add('theme-pro');
     document.getElementById('creditDisplay').classList.add('hidden');
     document.getElementById('proBadge').classList.remove('hidden');
   } else {
+    document.body.classList.remove('theme-pro');
     document.getElementById('creditDisplay').classList.remove('hidden');
     document.getElementById('proBadge').classList.add('hidden');
   }
 }
 
-// Pro Verification Code Logic
+// Verify Passcode & Set 24-Hour Expiry
 function verifyProCode() {
   const code = document.getElementById('proCodeInput').value.trim();
   const errorMsg = document.getElementById('codeError');
-  
-  if (code === 'RADHESHYAM') {
+
+  if (code === '7509VG') {
     isProVerified = true;
+    const expiryTime = new Date().getTime() + 24 * 60 * 60 * 1000;
+    localStorage.setItem('vg_pro_expiry', expiryTime.toString());
+
     errorMsg.classList.add('hidden');
     document.getElementById('proModal').classList.add('hidden');
     setModeUI('pro');
@@ -61,7 +97,7 @@ function cancelPro() {
   document.getElementById('codeError').classList.add('hidden');
 }
 
-// Drag and Drop & File Select
+// File Drag & Drop Handlers
 const fileInput = document.getElementById('fileInput');
 const dropZone = document.getElementById('dropZone');
 const btnGenerate = document.getElementById('btnGenerate');
@@ -72,25 +108,24 @@ fileInput.addEventListener('change', (e) => {
 
 dropZone.addEventListener('dragover', (e) => {
   e.preventDefault();
-  dropZone.style.borderColor = '#0077ff';
+  dropZone.classList.add('dragover');
 });
 
 dropZone.addEventListener('dragleave', () => {
-  dropZone.style.borderColor = '#2f3854';
+  dropZone.classList.remove('dragover');
 });
 
 dropZone.addEventListener('drop', (e) => {
   e.preventDefault();
-  dropZone.style.borderColor = '#2f3854';
+  dropZone.classList.remove('dragover');
   if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 });
 
 function handleFile(file) {
   selectedFile = file;
   btnGenerate.disabled = false;
-  btnGenerate.innerText = `Process (${file.name.slice(0, 15)}...)`;
-  
-  // Preview
+  btnGenerate.innerText = '✨ Remove Background';
+
   const reader = new FileReader();
   reader.onload = (e) => {
     document.getElementById('imgBefore').src = e.target.result;
@@ -98,15 +133,136 @@ function handleFile(file) {
   reader.readAsDataURL(file);
 }
 
-// Slider Logic
+// Comparison Slider
 const slider = document.getElementById('compareSlider');
 const beforeWrapper = document.getElementById('beforeWrapper');
-
 slider.addEventListener('input', (e) => {
   beforeWrapper.style.width = `${e.target.value}%`;
 });
 
-// Ad Trigger and Removal Call
+// Process Trigger
+function handleGenerate() {
+  if (currentModel === 'basic') {
+    if (credits < 5) {
+      alert('Aapke daily credits khatam ho gaye hain! Kal 20 credits milenge ya Pro model unlock karein.');
+      return;
+    }
+    document.getElementById('adModal').classList.remove('hidden');
+  } else {
+    startRemovalProcess();
+  }
+}
+
+function closeAdModal() {
+  document.getElementById('adModal').classList.add('hidden');
+  startRemovalProcess();
+}
+
+// Main Processing Engine
+async function startRemovalProcess() {
+  if (!selectedFile) return;
+
+  const loader = document.getElementById('processLoader');
+  loader.classList.remove('hidden');
+  btnGenerate.disabled = true;
+
+  try {
+    let blobResult = null;
+
+    if (currentModel === 'basic') {
+      // 1. Pixelcut API Call for Basic Model
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      const res = await fetch('https://api.pixelcut.ai/v1/remove-background', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': PIXELCUT_API_KEY
+        },
+        body: formData
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Pixelcut API Error (${res.status}): ${errText}`);
+      }
+      blobResult = await res.blob();
+
+    } else {
+      // 2. Photoroom Multi-Key Rotation for Pro Model
+      let success = false;
+      let lastErr = '';
+
+      for (let i = 0; i < PHOTOROOM_KEYS.length; i++) {
+        const activeKey = PHOTOROOM_KEYS[activePrKeyIndex];
+
+        try {
+          const formData = new FormData();
+          formData.append('image_file', selectedFile);
+
+          const res = await fetch('https://sdk.photoroom.com/v1/segment', {
+            method: 'POST',
+            headers: { 'x-api-key': activeKey },
+            body: formData
+          });
+
+          if (res.ok) {
+            blobResult = await res.blob();
+            success = true;
+            break;
+          } else {
+            const err = await res.text();
+            console.warn(`Photoroom Key ${activePrKeyIndex + 1} exhausted:`, err);
+            lastErr = err;
+            activePrKeyIndex = (activePrKeyIndex + 1) % PHOTOROOM_KEYS.length;
+          }
+        } catch (e) {
+          activePrKeyIndex = (activePrKeyIndex + 1) % PHOTOROOM_KEYS.length;
+        }
+      }
+
+      if (!success) {
+        throw new Error('Dono Photoroom Pro API Keys ke credits khatam ho chuke hain!');
+      }
+    }
+
+    // Show Result
+    processedImageUrl = URL.createObjectURL(blobResult);
+    document.getElementById('imgAfter').src = processedImageUrl;
+    document.getElementById('comparisonBox').classList.remove('hidden');
+    document.getElementById('btnDownload').classList.remove('hidden');
+
+    if (currentModel === 'basic') {
+      credits -= 5;
+      localStorage.setItem('vg_credits', credits.toString());
+      if (creditCountEl) creditCountEl.innerText = credits;
+    }
+
+  } catch (err) {
+    alert('Processing Error: ' + err.message);
+  } finally {
+    loader.classList.add('hidden');
+    btnGenerate.disabled = false;
+  }
+}
+
+function handleDownload() {
+  if (!processedImageUrl) return;
+  const link = document.createElement('a');
+  link.href = processedImageUrl;
+  link.download = 'VGREMOVER_transparent.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function handleVote(type) {
+  const el = type === 'like' ? document.getElementById('likeCount') : document.getElementById('unlikeCount');
+  el.innerText = parseInt(el.innerText, 10) + 1;
+}
+
+// Initialize on Load
+checkProStatus();
 function handleGenerate() {
   if (currentModel === 'basic') {
     if (credits < 5) {
