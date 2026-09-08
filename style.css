@@ -116,6 +116,8 @@ body {
 
 /* UPLOAD BOX */
 .upload-box {
+  position: relative;
+  overflow: hidden;
   background: #111827;
   border: 2px dashed #334155;
   border-radius: 16px;
@@ -172,6 +174,49 @@ body {
   font-size: 0.85rem;
   display: inline-block;
   word-break: break-all;
+}
+
+/* ============================================================ */
+/* ⚡ HIGH-TECH AI LASER SCANNER ANIMATION                      */
+/* ============================================================ */
+.scanner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: none;
+  z-index: 20;
+}
+
+.scanner-overlay.active {
+  display: block;
+}
+
+.scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
+  box-shadow: 0 0 15px #38bdf8, 0 0 30px #818cf8;
+  animation: laserScan 2s ease-in-out infinite alternate;
+}
+
+@keyframes laserScan {
+  0% {
+    top: 2%;
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 96%;
+    opacity: 0.4;
+  }
 }
 
 /* ACTION BUTTON */
@@ -525,6 +570,12 @@ body.theme-pro .btn-browse {
   background: #2a2007;
   border-color: #a16207;
   color: #fde047;
+}
+
+/* Pro Golden Laser Scan */
+body.theme-pro .scanner-line {
+  background: linear-gradient(90deg, transparent, #fbbf24, #f59e0b, transparent);
+  box-shadow: 0 0 15px #fbbf24, 0 0 30px #d97706;
 }
 
 body.theme-pro .btn-action {
