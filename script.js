@@ -3,9 +3,9 @@ let isProVerified = false;
 let selectedFile = null;
 let processedImageUrl = null;
 
-// ================= PRIVATE BIREFNET AI CONFIG =================
-const HF_ACCESS_TOKEN = "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";
-const BIREFNET_API_URL = "https://api-inference.huggingface.co/models/ZhengPeng7/BiRefNet";
+// ================= SECURE VERCEL BACKEND API =================
+// Browser direct Hugging Face ko hit nahi karega, Vercel Serverless Function handle karega
+const BIREFNET_API_URL = "/api/remove-bg";
 // =============================================================
 
 // Daily credits system
@@ -178,22 +178,19 @@ async function startRemovalProcess() {
   const scanner = document.getElementById('scanEffect');
 
   loader.classList.remove('hidden');
-  if (scanner) scanner.classList.add('active');
+  if (scanner) scanner.classList.add('active'); // Start Scanner Animation
   btnGenerate.disabled = true;
 
   try {
     const res = await fetch(BIREFNET_API_URL, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${HF_ACCESS_TOKEN}`
-      },
       body: selectedFile
     });
 
     if (!res.ok) {
       const errText = await res.text();
       if (res.status === 503) {
-        throw new Error('BiRefNet AI model start ho raha hai... Kripya 20-30 second baad dobara "Remove Background" dabayein.');
+        throw new Error('BiRefNet AI model load ho raha hai... 20-30 second baad dobara try karein.');
       }
       throw new Error(`AI Process Error (${res.status}): ${errText}`);
     }
@@ -216,7 +213,7 @@ async function startRemovalProcess() {
     alert(err.message);
   } finally {
     loader.classList.add('hidden');
-    if (scanner) scanner.classList.remove('active');
+    if (scanner) scanner.classList.remove('active'); // Stop Scanner Animation
     btnGenerate.disabled = false;
   }
 }
