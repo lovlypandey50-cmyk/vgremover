@@ -43,7 +43,8 @@ function checkProStatus() {
 // Switch UI Logic
 function switchModel(mode) {
   if (mode === 'pro' && !isProVerified) {
-    document.getElementById('proModal').classList.remove('hidden');
+    const proModal = document.getElementById('proModal');
+    if (proModal) proModal.classList.remove('hidden');
     return;
   }
   setModeUI(mode);
@@ -73,25 +74,29 @@ function setModeUI(mode) {
 
 // Passcode Verification
 function verifyProCode() {
-  const code = document.getElementById('proCodeInput').value.trim();
+  const proInput = document.getElementById('proCodeInput');
   const errorMsg = document.getElementById('codeError');
+  const proModal = document.getElementById('proModal');
+  const code = proInput ? proInput.value.trim() : '';
 
   if (code === '7509VG') {
     isProVerified = true;
     const expiryTime = new Date().getTime() + 24 * 60 * 60 * 1000;
     localStorage.setItem('vg_pro_expiry', expiryTime.toString());
 
-    errorMsg.classList.add('hidden');
-    document.getElementById('proModal').classList.add('hidden');
+    if (errorMsg) errorMsg.classList.add('hidden');
+    if (proModal) proModal.classList.add('hidden');
     setModeUI('pro');
   } else {
-    errorMsg.classList.remove('hidden');
+    if (errorMsg) errorMsg.classList.remove('hidden');
   }
 }
 
 function cancelPro() {
-  document.getElementById('proModal').classList.add('hidden');
-  document.getElementById('codeError').classList.add('hidden');
+  const proModal = document.getElementById('proModal');
+  const errorMsg = document.getElementById('codeError');
+  if (proModal) proModal.classList.add('hidden');
+  if (errorMsg) errorMsg.classList.add('hidden');
 }
 
 // Drag & Drop Handlers
@@ -99,42 +104,51 @@ const fileInput = document.getElementById('fileInput');
 const dropZone = document.getElementById('dropZone');
 const btnGenerate = document.getElementById('btnGenerate');
 
-fileInput.addEventListener('change', (e) => {
-  if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
-});
+if (fileInput) {
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+}
 
-dropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropZone.classList.add('dragover');
-});
+if (dropZone) {
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
 
-dropZone.addEventListener('dragleave', () => {
-  dropZone.classList.remove('dragover');
-});
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
 
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-});
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+}
 
 function handleFile(file) {
   selectedFile = file;
-  btnGenerate.disabled = false;
-  btnGenerate.innerText = '✨ Remove Background';
+  if (btnGenerate) {
+    btnGenerate.disabled = false;
+    btnGenerate.innerText = '✨ Remove Background';
+  }
 
   let uploadStatus = document.getElementById('uploadFileStatus');
-  if (!uploadStatus) {
+  if (!uploadStatus && dropZone) {
     uploadStatus = document.createElement('div');
     uploadStatus.id = 'uploadFileStatus';
     uploadStatus.className = 'upload-success-text';
     dropZone.appendChild(uploadStatus);
   }
-  uploadStatus.innerHTML = `✅ <b>Selected:</b> ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+  if (uploadStatus) {
+    uploadStatus.innerHTML = `✅ <b>Selected:</b> ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+  }
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    document.getElementById('imgBefore').src = e.target.result;
+    const imgBefore = document.getElementById('imgBefore');
+    if (imgBefore) imgBefore.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -142,9 +156,11 @@ function handleFile(file) {
 // Comparison Slider
 const slider = document.getElementById('compareSlider');
 const beforeWrapper = document.getElementById('beforeWrapper');
-slider.addEventListener('input', (e) => {
-  beforeWrapper.style.width = `${e.target.value}%`;
-});
+if (slider && beforeWrapper) {
+  slider.addEventListener('input', (e) => {
+    beforeWrapper.style.width = `${e.target.value}%`;
+  });
+}
 
 // Auto-Compress / Resize helper (Large Photos & DSLR bypass)
 function resizeImageBeforeUpload(file) {
@@ -174,7 +190,7 @@ function resizeImageBeforeUpload(file) {
         ctx.drawImage(img, 0, 0, width, height);
 
         canvas.toBlob((blob) => {
-          resolve(blob);
+          resolve(blob || file);
         }, 'image/jpeg', 0.92);
       };
       img.src = e.target.result;
@@ -195,14 +211,17 @@ function handleGenerate() {
       alert('Aapke daily credits khatam ho gaye hain! Kal naye milenge ya Pro passcode unlock karein.');
       return;
     }
-    document.getElementById('adModal').classList.remove('hidden');
+    const adModal = document.getElementById('adModal');
+    if (adModal) adModal.classList.remove('hidden');
+    else startRemovalProcess();
   } else {
     startRemovalProcess();
   }
 }
 
 function closeAdModal() {
-  document.getElementById('adModal').classList.add('hidden');
+  const adModal = document.getElementById('adModal');
+  if (adModal) adModal.classList.add('hidden');
   startRemovalProcess();
 }
 
@@ -213,12 +232,11 @@ async function startRemovalProcess() {
   const loader = document.getElementById('processLoader');
   const scanner = document.getElementById('scanEffect');
 
-  loader.classList.remove('hidden');
-  if (scanner) scanner.classList.add('active'); // Start Scanner Animation
-  btnGenerate.disabled = true;
+  if (loader) loader.classList.remove('hidden');
+  if (scanner) scanner.classList.add('active');
+  if (btnGenerate) btnGenerate.disabled = true;
 
   try {
-    // 25MB+ badi photos ko automatically safe payload me optimize karega
     const uploadPayload = await resizeImageBeforeUpload(selectedFile);
 
     const res = await fetch(BIREFNET_API_URL, {
@@ -229,18 +247,27 @@ async function startRemovalProcess() {
     if (!res.ok) {
       const errText = await res.text();
       if (res.status === 503) {
-        throw new Error('BiRefNet AI model start ho raha hai... 20-30 second baad dobara try karein.');
+        throw new Error('AI Model initialize ho raha hai, kripya 20 second baad dobara try karein.');
       }
       throw new Error(`AI Process Error (${res.status}): ${errText}`);
     }
 
     const blobResult = await res.blob();
 
+    // Revoke previous blob url to prevent memory leaks
+    if (processedImageUrl) {
+      URL.revokeObjectURL(processedImageUrl);
+    }
+
     // Show Output
     processedImageUrl = URL.createObjectURL(blobResult);
-    document.getElementById('imgAfter').src = processedImageUrl;
-    document.getElementById('comparisonBox').classList.remove('hidden');
-    document.getElementById('btnDownload').classList.remove('hidden');
+    const imgAfter = document.getElementById('imgAfter');
+    const compBox = document.getElementById('comparisonBox');
+    const downloadBtn = document.getElementById('btnDownload');
+
+    if (imgAfter) imgAfter.src = processedImageUrl;
+    if (compBox) compBox.classList.remove('hidden');
+    if (downloadBtn) downloadBtn.classList.remove('hidden');
 
     if (currentModel === 'basic') {
       credits -= 5;
@@ -251,9 +278,9 @@ async function startRemovalProcess() {
   } catch (err) {
     alert(err.message);
   } finally {
-    loader.classList.add('hidden');
-    if (scanner) scanner.classList.remove('active'); // Stop Scanner Animation
-    btnGenerate.disabled = false;
+    if (loader) loader.classList.add('hidden');
+    if (scanner) scanner.classList.remove('active');
+    if (btnGenerate) btnGenerate.disabled = false;
   }
 }
 
@@ -269,7 +296,7 @@ function handleDownload() {
 
 function handleVote(type) {
   const el = type === 'like' ? document.getElementById('likeCount') : document.getElementById('unlikeCount');
-  el.innerText = parseInt(el.innerText, 10) + 1;
+  if (el) el.innerText = parseInt(el.innerText || '0', 10) + 1;
 }
 
 // Init
