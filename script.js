@@ -4,10 +4,10 @@ let selectedFile = null;
 let processedImageUrl = null;
 
 // ================= API KEYS CONFIGURATION =================
-// 1. Pixelcut API Key (Basic Model ke liye)
-const PIXELCUT_API_KEY = "sk_d885ea66a47349feaba35dbb6212d077sk_d885ea66a47349feaba35dbb6212d077";
+// 1. Pixelcut API Key (Basic Model)
+const PIXELCUT_API_KEY = "sk_3bfb756dca6b49e7b8fc59a7c46c3f8e";
 
-// 2. Photoroom 2 API Keys Rotation (Pro Model ke liye)
+// 2. Photoroom 2 API Keys Rotation (Pro Model)
 const PHOTOROOM_KEYS = [
   "sk_pr_default_2517d141e809c9e93d9986e55a456dcafa2359c3",
   "sk_pr_default_8a4b46802172847b72b9e7a79a9b56e1ea353f06"
@@ -32,7 +32,7 @@ let credits = getDailyCredits();
 const creditCountEl = document.getElementById('creditCount');
 if (creditCountEl) creditCountEl.innerText = credits;
 
-// 24-Hour Pro Status Check on Page Load/Refresh
+// 24-Hour Pro Status Check
 function checkProStatus() {
   const proExpiry = localStorage.getItem('vg_pro_expiry');
   if (proExpiry) {
@@ -59,18 +59,25 @@ function switchModel(mode) {
 }
 
 function setModeUI(mode) {
-  currentModel = mode;
-  document.getElementById('basicTab').classList.toggle('active', mode === 'basic');
-  document.getElementById('proTab').classList.toggle('active', mode === 'pro');
+  currentModel = mode; // Active model lock
+  
+  const basicBtn = document.getElementById('basicTab');
+  const proBtn = document.getElementById('proTab');
+  const creditBox = document.getElementById('creditDisplay');
+  const proBox = document.getElementById('proBadge');
 
   if (mode === 'pro') {
     document.body.classList.add('theme-pro');
-    document.getElementById('creditDisplay').classList.add('hidden');
-    document.getElementById('proBadge').classList.remove('hidden');
+    if (basicBtn) basicBtn.classList.remove('active');
+    if (proBtn) proBtn.classList.add('active');
+    if (creditBox) creditBox.classList.add('hidden');
+    if (proBox) proBox.classList.remove('hidden');
   } else {
     document.body.classList.remove('theme-pro');
-    document.getElementById('creditDisplay').classList.remove('hidden');
-    document.getElementById('proBadge').classList.add('hidden');
+    if (basicBtn) basicBtn.classList.add('active');
+    if (proBtn) proBtn.classList.remove('active');
+    if (creditBox) creditBox.classList.remove('hidden');
+    if (proBox) proBox.classList.add('hidden');
   }
 }
 
@@ -79,7 +86,7 @@ function verifyProCode() {
   const code = document.getElementById('proCodeInput').value.trim();
   const errorMsg = document.getElementById('codeError');
 
-  if (code === '7509VG') {
+  if (code === 'RS7509') {
     isProVerified = true;
     const expiryTime = new Date().getTime() + 24 * 60 * 60 * 1000;
     localStorage.setItem('vg_pro_expiry', expiryTime.toString());
@@ -103,7 +110,7 @@ const dropZone = document.getElementById('dropZone');
 const btnGenerate = document.getElementById('btnGenerate');
 
 fileInput.addEventListener('change', (e) => {
-  if (e.target.files.length) handleFile(e.target.files[0]);
+  if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
 });
 
 dropZone.addEventListener('dragover', (e) => {
@@ -118,13 +125,22 @@ dropZone.addEventListener('dragleave', () => {
 dropZone.addEventListener('drop', (e) => {
   e.preventDefault();
   dropZone.classList.remove('dragover');
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
 
 function handleFile(file) {
   selectedFile = file;
   btnGenerate.disabled = false;
   btnGenerate.innerText = '✨ Remove Background';
+
+  let uploadStatus = document.getElementById('uploadFileStatus');
+  if (!uploadStatus) {
+    uploadStatus = document.createElement('div');
+    uploadStatus.id = 'uploadFileStatus';
+    uploadStatus.className = 'upload-success-text';
+    dropZone.appendChild(uploadStatus);
+  }
+  uploadStatus.innerHTML = `✅ <b>Selected:</b> ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
 
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -142,6 +158,11 @@ slider.addEventListener('input', (e) => {
 
 // Process Trigger
 function handleGenerate() {
+  if (!selectedFile) {
+    alert('Kripya pehle photo select karein!');
+    return;
+  }
+
   if (currentModel === 'basic') {
     if (credits < 5) {
       alert('Aapke daily credits khatam ho gaye hain! Kal 20 credits milenge ya Pro model unlock karein.');
@@ -174,7 +195,7 @@ async function startRemovalProcess() {
       const formData = new FormData();
       formData.append('image', selectedFile);
 
-      const res = await fetch('https://api.pixelcut.ai/v1/remove-background', {
+      const res = await fetch('https://api.developer.pixelcut.ai/v1/remove-background', {
         method: 'POST',
         headers: {
           'X-API-KEY': PIXELCUT_API_KEY
@@ -184,7 +205,7 @@ async function startRemovalProcess() {
 
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`Pixelcut API Error (${res.status}): ${errText}`);
+        throw new Error(`Pixelcut Error (${res.status}): ${errText}`);
       }
       blobResult = await res.blob();
 
@@ -212,7 +233,7 @@ async function startRemovalProcess() {
             break;
           } else {
             const err = await res.text();
-            console.warn(`Photoroom Key ${activePrKeyIndex + 1} exhausted:`, err);
+            console.warn(`Photoroom Key ${activePrKeyIndex + 1} exhausted (${res.status}):`, err);
             lastErr = err;
             activePrKeyIndex = (activePrKeyIndex + 1) % PHOTOROOM_KEYS.length;
           }
@@ -239,7 +260,7 @@ async function startRemovalProcess() {
     }
 
   } catch (err) {
-    alert('Processing Error: ' + err.message);
+    alert(err.message);
   } finally {
     loader.classList.add('hidden');
     btnGenerate.disabled = false;
@@ -263,90 +284,3 @@ function handleVote(type) {
 
 // Initialize on Load
 checkProStatus();
-function handleGenerate() {
-  if (currentModel === 'basic') {
-    if (credits < 5) {
-      alert('Aapke pas credits khatam ho gaye hain! Kal 20 naye credits milenge ya Pro model unlock karein.');
-      return;
-    }
-    // Trigger ad popup before processing
-    document.getElementById('adModal').classList.remove('hidden');
-  } else {
-    runPhotoroomCall();
-  }
-}
-
-function closeAdModal() {
-  document.getElementById('adModal').classList.add('hidden');
-  runPhotoroomCall();
-}
-
-async function runPhotoroomCall() {
-  if (!selectedFile) return;
-
-  const loader = document.getElementById('processLoader');
-  loader.classList.remove('hidden');
-  btnGenerate.disabled = true;
-
-  try {
-    const formData = new FormData();
-    formData.append('image_file', selectedFile);
-
-    // Standard Photoroom background removal endpoint
-    const response = await fetch('https://sdk.photoroom.com/v1/segment', {
-      method: 'POST',
-      headers: {
-        'x-api-key': 'sk_pr_vgdesigner7509_716eea600332baa214121f7dc65f6e3442873e86'
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('API Error:', errText);
-      throw new Error(`Status ${response.status}: ${errText}`);
-    }
-
-    const blob = await response.blob();
-    processedImageUrl = URL.createObjectURL(blob);
-
-    // Result display
-    document.getElementById('imgAfter').src = processedImageUrl;
-    document.getElementById('comparisonBox').classList.remove('hidden');
-    document.getElementById('btnDownload').classList.remove('hidden');
-
-    // Deduct credit for Basic Model
-    if (currentModel === 'basic') {
-      credits -= 5;
-      localStorage.setItem('vg_credits', credits.toString());
-      document.getElementById('creditCount').innerText = credits;
-    }
-
-  } catch (err) {
-    alert('Processing error: ' + err.message);
-  } finally {
-    loader.classList.add('hidden');
-    btnGenerate.disabled = false;
-  }
-}
-
-function handleDownload() {
-  if (!processedImageUrl) return;
-  const link = document.createElement('a');
-  link.href = processedImageUrl;
-  link.download = 'VGREMOVER_result.png';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-// Like / Unlike Vote
-function handleVote(type) {
-  if (type === 'like') {
-    let count = parseInt(document.getElementById('likeCount').innerText, 10);
-    document.getElementById('likeCount').innerText = count + 1;
-  } else {
-    let count = parseInt(document.getElementById('unlikeCount').innerText, 10);
-    document.getElementById('unlikeCount').innerText = count + 1;
-  }
-}
