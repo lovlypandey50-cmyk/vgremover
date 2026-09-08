@@ -10,7 +10,6 @@ const HF_ACCESS_TOKEN = "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";
 // BiRefNet High-Resolution Jewellery AI Endpoint
 const BIREFNET_API_URL = "https://api-inference.huggingface.co/models/ZhengPeng7/BiRefNet";
 // =============================================================
-
 // Daily credits system
 const getDailyCredits = () => {
   const today = new Date().toISOString().slice(0, 10);
@@ -178,23 +177,22 @@ async function startRemovalProcess() {
   if (!selectedFile) return;
 
   const loader = document.getElementById('processLoader');
+  const scanner = document.getElementById('scanEffect');
+
   loader.classList.remove('hidden');
+  if (scanner) scanner.classList.add('active'); // Start Scanner Animation
   btnGenerate.disabled = true;
 
   try {
-    const res = await fetch(BIREFNET_API_URL, {
+    const res = await fetch(PRIVATE_API_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${HF_ACCESS_TOKEN}`
-      },
       body: selectedFile
     });
 
     if (!res.ok) {
       const errText = await res.text();
-      // Server warmup notification
       if (res.status === 503) {
-        throw new Error('BiRefNet AI model start ho raha hai... Kripya 20-30 second baad dobara "Remove Background" dabayein.');
+        throw new Error('AI Engine start ho raha hai... 20-30 second baad dobara "Remove Background" dabayein.');
       }
       throw new Error(`AI Process Error (${res.status}): ${errText}`);
     }
@@ -217,6 +215,7 @@ async function startRemovalProcess() {
     alert(err.message);
   } finally {
     loader.classList.add('hidden');
+    if (scanner) scanner.classList.remove('active'); // Stop Scanner Animation
     btnGenerate.disabled = false;
   }
 }
