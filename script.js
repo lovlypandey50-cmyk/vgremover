@@ -4,10 +4,10 @@ let selectedFile = null;
 let processedImageUrl = null;
 
 // ================= API KEYS CONFIGURATION =================
-// 1. Pixelcut API Key (Basic Model)
-const PIXELCUT_API_KEY = "sk_3bfb756dca6b49e7b8fc59a7c46c3f8e";
+// 1. Remove.bg API Key (Basic Model - Direct Browser Allowed)
+const REMOVE_BG_API_KEY = "DLH1WrF957mHS5De65HWmEad";
 
-// 2. Photoroom 2 API Keys Rotation (Pro Model)
+// 2. Photoroom API Keys Rotation (Pro Model)
 const PHOTOROOM_KEYS = [
   "sk_pr_default_2517d141e809c9e93d9986e55a456dcafa2359c3",
   "sk_pr_default_8a4b46802172847b72b9e7a79a9b56e1ea353f06"
@@ -16,7 +16,7 @@ const PHOTOROOM_KEYS = [
 let activePrKeyIndex = 0;
 // ==========================================================
 
-// Daily credit reset system (Localstorage)
+// Daily credit reset system
 const getDailyCredits = () => {
   const today = new Date().toISOString().slice(0, 10);
   const savedDate = localStorage.getItem('vg_credit_date');
@@ -59,7 +59,7 @@ function switchModel(mode) {
 }
 
 function setModeUI(mode) {
-  currentModel = mode; // Active model lock
+  currentModel = mode;
   
   const basicBtn = document.getElementById('basicTab');
   const proBtn = document.getElementById('proTab');
@@ -104,7 +104,7 @@ function cancelPro() {
   document.getElementById('codeError').classList.add('hidden');
 }
 
-// File Drag & Drop Handlers
+// File Handlers
 const fileInput = document.getElementById('fileInput');
 const dropZone = document.getElementById('dropZone');
 const btnGenerate = document.getElementById('btnGenerate');
@@ -179,7 +179,7 @@ function closeAdModal() {
   startRemovalProcess();
 }
 
-// Main Processing Engine
+// Main Engine
 async function startRemovalProcess() {
   if (!selectedFile) return;
 
@@ -191,26 +191,27 @@ async function startRemovalProcess() {
     let blobResult = null;
 
     if (currentModel === 'basic') {
-      // 1. Pixelcut API Call for Basic Model
+      // Remove.bg for Basic Model
       const formData = new FormData();
-      formData.append('image', selectedFile);
+      formData.append('image_file', selectedFile);
+      formData.append('size', 'auto');
 
-      const res = await fetch('https://api.developer.pixelcut.ai/v1/remove-background', {
+      const res = await fetch('https://api.remove.bg/v1.0/removebg', {
         method: 'POST',
         headers: {
-          'X-API-KEY': PIXELCUT_API_KEY
+          'X-Api-Key': REMOVE_BG_API_KEY
         },
         body: formData
       });
 
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`Pixelcut Error (${res.status}): ${errText}`);
+        throw new Error(`Remove.bg Error (${res.status}): ${errText}`);
       }
       blobResult = await res.blob();
 
     } else {
-      // 2. Photoroom Multi-Key Rotation for Pro Model
+      // Photoroom Multi-Key Rotation for Pro Model
       let success = false;
       let lastErr = '';
 
@@ -243,11 +244,11 @@ async function startRemovalProcess() {
       }
 
       if (!success) {
-        throw new Error('Dono Photoroom Pro API Keys ke credits khatam ho chuke hain!');
+        throw new Error('Sabhi Photoroom Pro API Keys ke credits khatam ho chuke hain!');
       }
     }
 
-    // Show Result
+    // Output Display
     processedImageUrl = URL.createObjectURL(blobResult);
     document.getElementById('imgAfter').src = processedImageUrl;
     document.getElementById('comparisonBox').classList.remove('hidden');
@@ -282,5 +283,4 @@ function handleVote(type) {
   el.innerText = parseInt(el.innerText, 10) + 1;
 }
 
-// Initialize on Load
 checkProStatus();
