@@ -2,6 +2,7 @@ export const config = {
   api: {
     bodyParser: false,
   },
+  maxDuration: 60, // Timeout limit 60 seconds tak badhayi
 };
 
 export default async function handler(req, res) {
@@ -12,7 +13,7 @@ export default async function handler(req, res) {
   const HF_TOKEN = process.env.HF_TOKEN;
 
   if (!HF_TOKEN) {
-    return res.status(500).send("HF_TOKEN missing in Vercel Environment Variables!");
+    return res.status(500).send("HF_TOKEN Vercel Environment Variables mein nahi mila!");
   }
 
   try {
@@ -22,6 +23,7 @@ export default async function handler(req, res) {
     }
     const buffer = Buffer.concat(chunks);
 
+    // Hugging Face RMBG-1.4 API Request
     const response = await fetch(
       "https://api-inference.huggingface.co/models/briaai/RMBG-1.4",
       {
@@ -30,6 +32,7 @@ export default async function handler(req, res) {
           Authorization: `Bearer ${HF_TOKEN.trim()}`,
           "Content-Type": "application/octet-stream",
           "x-wait-for-model": "true",
+          "x-use-cache": "false"
         },
         body: buffer,
       }
