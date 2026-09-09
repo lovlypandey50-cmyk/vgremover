@@ -1,5 +1,5 @@
 // ==========================================
-// 🔗 AAPKA CLOUDFLARE BACKEND URL (YAHAN CHANGE KAREIN)
+// 🔗 AAPKA CLOUDFLARE BACKEND URL
 // ==========================================
 const BACKEND_API_URL = "https://remaining-foundation-resort-portal.trycloudflare.com/remove-bg";
 
@@ -208,6 +208,9 @@ async function startRemovalProcess() {
 
     const response = await fetch(BACKEND_API_URL, {
       method: "POST",
+      headers: {
+        "bypass-tunnel-reminder": "true"
+      },
       body: formData
     });
 
