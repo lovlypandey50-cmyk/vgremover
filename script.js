@@ -185,24 +185,27 @@ function closeAdModal() {
   startRemovalProcess();
 }
 
-// Main AI Process (BRIA RMBG-1.4 Studio Model)
+// Main AI Process (Self-contained dynamic loader)
 async function startRemovalProcess() {
   if (!selectedFile) return;
 
   const loader = document.getElementById('processLoader');
   const scanner = document.getElementById('scanEffect');
-  const statusSpan = document.getElementById('loaderStatusText');
+  const statusSpan = document.getElementById('loaderStatusText') || (loader ? loader.querySelector('span') : null);
 
   if (loader) loader.classList.remove('hidden');
   if (scanner) scanner.classList.add('active');
   if (btnGenerate) btnGenerate.disabled = true;
 
   try {
-    // 1. Photoroom-grade AI Model load (first time setup)
+    // 1. Photoroom-grade AI Model initialization via Dynamic Import
     if (!aiSegmenter) {
       if (statusSpan) statusSpan.innerText = "Loading Studio AI Engine (first time only)...";
-      transformers.env.allowLocalModels = false;
-      aiSegmenter = await transformers.pipeline('image-segmentation', 'briaai/RMBG-1.4');
+      
+      const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+      env.allowLocalModels = false;
+      
+      aiSegmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4');
     }
 
     if (statusSpan) statusSpan.innerText = "Extracting Fine Edges with VG AI...";
@@ -213,30 +216,26 @@ async function startRemovalProcess() {
     imgElement.src = originalObjectUrl;
     await new Promise((resolve) => { imgElement.onload = resolve; });
 
-    // 3. AI dwara high precision mask calculate
+    // 3. AI dwara mask generation
     const result = await aiSegmenter(imgElement.src);
     const maskCanvas = result[0].mask.toCanvas();
 
-    // 4. Studio E-commerce Cutout Rendering
+    // 4. Clean Edge Rendering Canvas
     const canvas = document.createElement("canvas");
     canvas.width = imgElement.naturalWidth;
     canvas.height = imgElement.naturalHeight;
     const ctx = canvas.getContext("2d");
 
-    // Original Image draw
     ctx.drawImage(imgElement, 0, 0);
-
-    // Alpha mask combine (Natural Sharp Edges)
     ctx.globalCompositeOperation = "destination-in";
     ctx.drawImage(maskCanvas, 0, 0, imgElement.naturalWidth, imgElement.naturalHeight);
 
-    // Revoke previous URLs
     URL.revokeObjectURL(originalObjectUrl);
     if (processedImageUrl) {
       URL.revokeObjectURL(processedImageUrl);
     }
 
-    // 5. HD Transparent PNG Blob create
+    // 5. HD Transparent Output Blob
     await new Promise((resolve) => {
       canvas.toBlob((blob) => {
         processedImageUrl = URL.createObjectURL(blob);
