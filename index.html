@@ -5,13 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VGREMOVER - AI Background Remover</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Studio Grade AI Engine (Transformers.js RMBG-1.4 Support) -->
-  <!-- Studio AI Global Engine Loader -->
-<script type="module">
-  import * as transformers from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
-  window.transformers = transformers;
-</script>
 </head>
 <body class="theme-default">
 
@@ -21,8 +14,8 @@
     <div class="header-right">
       <a href="normal.html" class="normal-user-link">⚡ Normal User</a>
       <div class="model-switch">
-        <button id="basicTab" class="tab-btn active" onclick="switchModel('basic')">Basic Model</button>
-        <button id="proTab" class="tab-btn" onclick="switchModel('pro')">👑 Pro Model</button>
+        <button id="basicTab" class="tab-btn active" onclick="window.switchModel('basic')">Basic Model</button>
+        <button id="proTab" class="tab-btn" onclick="window.switchModel('pro')">👑 Pro Model</button>
       </div>
     </div>
   </header>
@@ -37,7 +30,6 @@
   <main class="main-container">
     <!-- Upload Box -->
     <div id="dropZone" class="upload-box">
-      <!-- High-Tech Laser Scan Animation Bar -->
       <div id="scanEffect" class="scanner-overlay"><div class="scanner-line"></div></div>
 
       <div class="upload-content">
@@ -55,7 +47,7 @@
 
     <!-- Generate Action Button -->
     <div class="action-wrap">
-      <button id="btnGenerate" class="btn-action" onclick="handleGenerate()" disabled>
+      <button id="btnGenerate" class="btn-action" onclick="window.handleGenerate()" disabled>
         ✨ Remove Background
       </button>
     </div>
@@ -77,7 +69,7 @@
       </div>
 
       <div class="download-wrap">
-        <button id="btnDownload" class="btn-download hidden" onclick="handleDownload()">
+        <button id="btnDownload" class="btn-download hidden" onclick="window.handleDownload()">
           ⬇ Download Transparent PNG
         </button>
       </div>
@@ -87,12 +79,12 @@
     <div class="feedback-card">
       <p>Was this result helpful?</p>
       <div class="vote-buttons">
-        <button class="vote-btn" onclick="handleVote('like')">👍 Like (<span id="likeCount">142</span>)</button>
-        <button class="vote-btn" onclick="handleVote('unlike')">👎 Unlike (<span id="unlikeCount">3</span>)</button>
+        <button class="vote-btn" onclick="window.handleVote('like')">👍 Like (<span id="likeCount">142</span>)</button>
+        <button class="vote-btn" onclick="window.handleVote('unlike')">👎 Unlike (<span id="unlikeCount">3</span>)</button>
       </div>
     </div>
 
-    <!-- Features Section (Headline + 4 Grid Boxes) -->
+    <!-- Features Section -->
     <section class="features-section">
       <h2 class="features-headline">Smart AI Background Removal with Natural Edges</h2>
       
@@ -122,7 +114,7 @@
       <p class="features-subtext">VGRemover makes background editing fast, smooth, and professional.</p>
     </section>
 
-    <!-- Footer Information Card -->
+    <!-- Footer -->
     <footer class="app-footer">
       <div class="footer-block">
         <span class="footer-title">About VG DESIGNER</span>
@@ -144,8 +136,8 @@
       <input type="text" id="proCodeInput" placeholder="Enter Access Code..." />
       <p id="codeError" class="error-text hidden">Invalid access passcode!</p>
       <div class="modal-actions">
-        <button class="btn-gold" onclick="verifyProCode()">Unlock Pro (24 Hours)</button>
-        <button class="btn-secondary" onclick="cancelPro()">Cancel</button>
+        <button class="btn-gold" onclick="window.verifyProCode()">Unlock Pro (24 Hours)</button>
+        <button class="btn-secondary" onclick="window.cancelPro()">Cancel</button>
       </div>
     </div>
   </div>
@@ -157,10 +149,11 @@
       <div class="ad-placeholder">
         <p>Advertisement Space</p>
       </div>
-      <button class="btn-action" onclick="closeAdModal()">Continue to Background Removal</button>
+      <button class="btn-action" onclick="window.closeAdModal()">Continue to Background Removal</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Script ko module type mein load karenge -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>
