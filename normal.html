@@ -18,7 +18,7 @@
 
   <!-- Status Bar -->
   <div class="status-bar">
-    <div class="badge credits-badge">Powered by VG DESIGNER AI (BiRefNet GPU)</div>
+    <div class="badge credits-badge">Powered by VG DESIGNER AI Engine</div>
   </div>
 
   <!-- Main Container -->
@@ -48,7 +48,7 @@
     <!-- Loader -->
     <div id="processLoaderNormal" class="loader hidden">
       <div class="spinner"></div>
-      <span id="normalLoaderText">BiRefNet AI processing on GPU...</span>
+      <span id="normalLoaderText">Processing Studio Quality Cutout...</span>
     </div>
 
     <!-- Comparison Section -->
@@ -71,9 +71,9 @@
 
   <script>
     // ==========================================
-    // 🔗 AAPKA CLOUDFLARE BACKEND URL
+    // 🔗 VERCEL PERMANENT API ENDPOINT
     // ==========================================
-    const BACKEND_API_URL = "https://remaining-foundation-resort-portal.trycloudflare.com/remove-bg";
+    const BACKEND_API_URL = "/api/remove-bg";
 
     let selectedNormalFile = null;
     let processedNormalUrl = null;
@@ -129,16 +129,14 @@
       if (normalLoaderText) normalLoaderText.innerText = "Processing Studio Quality Cutout...";
 
       try {
-        const formData = new FormData();
-        formData.append("image", selectedNormalFile);
-
         const response = await fetch(BACKEND_API_URL, {
           method: "POST",
-          body: formData
+          body: selectedNormalFile
         });
 
         if (!response.ok) {
-          throw new Error(`GPU Server Error (${response.status})`);
+          const errText = await response.text();
+          throw new Error(`Server Error (${response.status}): ${errText}`);
         }
 
         const blobResult = await response.blob();
