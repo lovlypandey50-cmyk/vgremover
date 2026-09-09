@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VGREMOVER - Normal User Engine</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Studio AI Engine (Unlimited RMBG-1.4) -->
+  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"></script>
 </head>
 <body class="theme-default">
 
@@ -18,7 +21,7 @@
 
   <!-- Status Bar -->
   <div class="status-bar">
-    <div class="badge credits-badge">Powered by VG DESIGNER AI</div>
+    <div class="badge credits-badge">Powered by VG DESIGNER AI (Unlimited HD)</div>
   </div>
 
   <!-- Main Container -->
@@ -48,7 +51,7 @@
     <!-- Loader -->
     <div id="processLoaderNormal" class="loader hidden">
       <div class="spinner"></div>
-      <span>Processing with VG DESIGNER AI...</span>
+      <span id="normalLoaderText">Processing with VG DESIGNER AI...</span>
     </div>
 
     <!-- Comparison Section -->
@@ -70,16 +73,14 @@
   </main>
 
   <script>
-    // ================= REMOVE.BG API KEY =================
-    const REMOVE_BG_API_KEY = "DLH1WrF957mHS5De65HWmEad";
-    // ====================================================
-
     let selectedNormalFile = null;
     let processedNormalUrl = null;
+    let normalModelInstance = null;
 
     const fileInputNormal = document.getElementById('fileInputNormal');
     const dropZoneNormal = document.getElementById('dropZoneNormal');
     const btnGenerateNormal = document.getElementById('btnGenerateNormal');
+    const normalLoaderText = document.getElementById('normalLoaderText');
 
     fileInputNormal.addEventListener('change', (e) => {
       if (e.target.files.length) handleNormalFile(e.target.files[0]);
@@ -126,31 +127,47 @@
       btnGenerateNormal.disabled = true;
 
       try {
-        const formData = new FormData();
-        formData.append('image_file', selectedNormalFile);
-        formData.append('size', 'auto');
-
-        const res = await fetch('https://api.remove.bg/v1.0/removebg', {
-          method: 'POST',
-          headers: {
-            'X-Api-Key': REMOVE_BG_API_KEY
-          },
-          body: formData
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Remove.bg Error (${res.status}): ${errText}`);
+        // 1. Photoroom-quality SOTA Model Initialize
+        if (!normalModelInstance) {
+          normalLoaderText.innerText = "Loading AI Model (first time only)...";
+          transformers.env.allowLocalModels = false;
+          normalModelInstance = await transformers.pipeline('image-segmentation', 'briaai/RMBG-1.4');
         }
 
-        const blob = await res.blob();
-        processedNormalUrl = URL.createObjectURL(blob);
+        normalLoaderText.innerText = "Extracting Edge Cutout...";
 
-        document.getElementById('imgAfterNormal').src = processedNormalUrl;
-        document.getElementById('comparisonBoxNormal').classList.remove('hidden');
-        document.getElementById('btnDownloadNormal').classList.remove('hidden');
+        // 2. Load selected image to Image element
+        const imgObj = new Image();
+        imgObj.src = URL.createObjectURL(selectedNormalFile);
+        await new Promise((resolve) => { imgObj.onload = resolve; });
+
+        // 3. Segment mask calculate karein
+        const segmentResult = await normalModelInstance(imgObj.src);
+        const maskCanvas = segmentResult[0].mask.toCanvas();
+
+        // 4. Razor sharp transparent PNG canvas blend
+        const canvas = document.createElement("canvas");
+        canvas.width = imgObj.naturalWidth;
+        canvas.height = imgObj.naturalHeight;
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(imgObj, 0, 0);
+        ctx.globalCompositeOperation = "destination-in";
+        ctx.drawImage(maskCanvas, 0, 0, imgObj.naturalWidth, imgObj.naturalHeight);
+
+        // 5. Output Blob creation
+        await new Promise((resolve) => {
+          canvas.toBlob((blob) => {
+            processedNormalUrl = URL.createObjectURL(blob);
+            document.getElementById('imgAfterNormal').src = processedNormalUrl;
+            document.getElementById('comparisonBoxNormal').classList.remove('hidden');
+            document.getElementById('btnDownloadNormal').classList.remove('hidden');
+            resolve();
+          }, "image/png");
+        });
 
       } catch (err) {
+        console.error(err);
         alert('Processing Error: ' + err.message);
       } finally {
         loader.classList.add('hidden');
