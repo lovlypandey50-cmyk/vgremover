@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VGREMOVER - Normal User Engine</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Studio AI Engine (Unlimited RMBG-1.4) -->
-  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"></script>
 </head>
 <body class="theme-default">
 
@@ -21,7 +18,7 @@
 
   <!-- Status Bar -->
   <div class="status-bar">
-    <div class="badge credits-badge">Powered by VG DESIGNER AI (Unlimited HD)</div>
+    <div class="badge credits-badge">Powered by VG DESIGNER AI (BiRefNet GPU)</div>
   </div>
 
   <!-- Main Container -->
@@ -51,7 +48,7 @@
     <!-- Loader -->
     <div id="processLoaderNormal" class="loader hidden">
       <div class="spinner"></div>
-      <span id="normalLoaderText">Processing with VG DESIGNER AI...</span>
+      <span id="normalLoaderText">BiRefNet AI processing on GPU...</span>
     </div>
 
     <!-- Comparison Section -->
@@ -73,9 +70,13 @@
   </main>
 
   <script>
+    // ==========================================
+    // 🔗 AAPKA CLOUDFLARE BACKEND URL
+    // ==========================================
+    const BACKEND_API_URL = "https://remaining-foundation-resort-portal.trycloudflare.com/remove-bg";
+
     let selectedNormalFile = null;
     let processedNormalUrl = null;
-    let normalModelInstance = null;
 
     const fileInputNormal = document.getElementById('fileInputNormal');
     const dropZoneNormal = document.getElementById('dropZoneNormal');
@@ -125,46 +126,29 @@
       const loader = document.getElementById('processLoaderNormal');
       loader.classList.remove('hidden');
       btnGenerateNormal.disabled = true;
+      if (normalLoaderText) normalLoaderText.innerText = "Processing Studio Quality Cutout...";
 
       try {
-        // 1. Photoroom-quality SOTA Model Initialize
-        if (!normalModelInstance) {
-          normalLoaderText.innerText = "Loading AI Model (first time only)...";
-          transformers.env.allowLocalModels = false;
-          normalModelInstance = await transformers.pipeline('image-segmentation', 'briaai/RMBG-1.4');
+        const formData = new FormData();
+        formData.append("image", selectedNormalFile);
+
+        const response = await fetch(BACKEND_API_URL, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`GPU Server Error (${response.status})`);
         }
 
-        normalLoaderText.innerText = "Extracting Edge Cutout...";
+        const blobResult = await response.blob();
 
-        // 2. Load selected image to Image element
-        const imgObj = new Image();
-        imgObj.src = URL.createObjectURL(selectedNormalFile);
-        await new Promise((resolve) => { imgObj.onload = resolve; });
+        if (processedNormalUrl) URL.revokeObjectURL(processedNormalUrl);
+        processedNormalUrl = URL.createObjectURL(blobResult);
 
-        // 3. Segment mask calculate karein
-        const segmentResult = await normalModelInstance(imgObj.src);
-        const maskCanvas = segmentResult[0].mask.toCanvas();
-
-        // 4. Razor sharp transparent PNG canvas blend
-        const canvas = document.createElement("canvas");
-        canvas.width = imgObj.naturalWidth;
-        canvas.height = imgObj.naturalHeight;
-        const ctx = canvas.getContext("2d");
-
-        ctx.drawImage(imgObj, 0, 0);
-        ctx.globalCompositeOperation = "destination-in";
-        ctx.drawImage(maskCanvas, 0, 0, imgObj.naturalWidth, imgObj.naturalHeight);
-
-        // 5. Output Blob creation
-        await new Promise((resolve) => {
-          canvas.toBlob((blob) => {
-            processedNormalUrl = URL.createObjectURL(blob);
-            document.getElementById('imgAfterNormal').src = processedNormalUrl;
-            document.getElementById('comparisonBoxNormal').classList.remove('hidden');
-            document.getElementById('btnDownloadNormal').classList.remove('hidden');
-            resolve();
-          }, "image/png");
-        });
+        document.getElementById('imgAfterNormal').src = processedNormalUrl;
+        document.getElementById('comparisonBoxNormal').classList.remove('hidden');
+        document.getElementById('btnDownloadNormal').classList.remove('hidden');
 
       } catch (err) {
         console.error(err);
