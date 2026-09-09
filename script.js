@@ -1,13 +1,12 @@
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
-
-// Local model check disable
-env.allowLocalModels = false;
+// ==========================================
+// 🔗 AAPKA CLOUDFLARE BACKEND URL (YAHAN CHANGE KAREIN)
+// ==========================================
+const BACKEND_API_URL = "https://remaining-foundation-resort-portal.trycloudflare.com/remove-bg";
 
 let currentModel = 'basic';
 let isProVerified = false;
 let selectedFile = null;
 let processedImageUrl = null;
-let segmenter = null;
 
 // Daily credits system
 const getDailyCredits = () => {
@@ -190,7 +189,7 @@ window.closeAdModal = function() {
   startRemovalProcess();
 };
 
-// Main AI Process
+// Main AI Process (Powered by Google Colab BiRefNet GPU)
 async function startRemovalProcess() {
   if (!selectedFile) return;
 
@@ -201,66 +200,42 @@ async function startRemovalProcess() {
   if (loader) loader.classList.remove('hidden');
   if (scanner) scanner.classList.add('active');
   if (btnGenerate) btnGenerate.disabled = true;
+  if (statusSpan) statusSpan.innerText = "BiRefNet AI processing on GPU...";
 
   try {
-    // 1. Fully Browser-Compatible AI Segmentation Model
-    if (!segmenter) {
-      if (statusSpan) statusSpan.innerText = "Loading AI Model Engine (first time only)...";
-      segmenter = await pipeline('image-segmentation', 'Xenova/modnet');
-    }
+    const formData = new FormData();
+    formData.append("image", selectedFile);
 
-    if (statusSpan) statusSpan.innerText = "Extracting Fine Edges with VG AI...";
-
-    // 2. Load Original Image
-    const imgElement = new Image();
-    const originalObjectUrl = URL.createObjectURL(selectedFile);
-    imgElement.src = originalObjectUrl;
-    await new Promise((resolve) => { imgElement.onload = resolve; });
-
-    // 3. AI Mask Output
-    const result = await segmenter(imgElement.src);
-    const maskCanvas = result[0].mask.toCanvas();
-
-    // 4. Draw to transparent canvas
-    const canvas = document.createElement("canvas");
-    canvas.width = imgElement.naturalWidth;
-    canvas.height = imgElement.naturalHeight;
-    const ctx = canvas.getContext("2d");
-
-    ctx.drawImage(imgElement, 0, 0);
-    ctx.globalCompositeOperation = "destination-in";
-    ctx.drawImage(maskCanvas, 0, 0, imgElement.naturalWidth, imgElement.naturalHeight);
-
-    URL.revokeObjectURL(originalObjectUrl);
-    if (processedImageUrl) {
-      URL.revokeObjectURL(processedImageUrl);
-    }
-
-    // 5. Output Blob create
-    await new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        processedImageUrl = URL.createObjectURL(blob);
-
-        const imgAfter = document.getElementById('imgAfter');
-        const compBox = document.getElementById('comparisonBox');
-        const downloadBtn = document.getElementById('btnDownload');
-
-        if (imgAfter) imgAfter.src = processedImageUrl;
-        if (compBox) compBox.classList.remove('hidden');
-        if (downloadBtn) downloadBtn.classList.remove('hidden');
-
-        if (currentModel === 'basic') {
-          credits -= 5;
-          localStorage.setItem('vg_credits', credits.toString());
-          if (creditCountEl) creditCountEl.innerText = credits;
-        }
-
-        resolve();
-      }, "image/png");
+    const response = await fetch(BACKEND_API_URL, {
+      method: "POST",
+      body: formData
     });
 
+    if (!response.ok) {
+      throw new Error(`GPU Server Error (${response.status})`);
+    }
+
+    const blobResult = await response.blob();
+
+    if (processedImageUrl) URL.revokeObjectURL(processedImageUrl);
+    processedImageUrl = URL.createObjectURL(blobResult);
+
+    const imgAfter = document.getElementById('imgAfter');
+    const compBox = document.getElementById('comparisonBox');
+    const downloadBtn = document.getElementById('btnDownload');
+
+    if (imgAfter) imgAfter.src = processedImageUrl;
+    if (compBox) compBox.classList.remove('hidden');
+    if (downloadBtn) downloadBtn.classList.remove('hidden');
+
+    if (currentModel === 'basic') {
+      credits -= 5;
+      localStorage.setItem('vg_credits', credits.toString());
+      if (creditCountEl) creditCountEl.innerText = credits;
+    }
+
   } catch (err) {
-    console.error("VGRemover Process Error:", err);
+    console.error("Removal Error:", err);
     alert('Processing Error: ' + err.message);
   } finally {
     if (loader) loader.classList.add('hidden');
