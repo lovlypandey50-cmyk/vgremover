@@ -9,11 +9,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 🔑 LINE 11: Yahan apna Hugging Face Token (hf_...) paste karein
-  const HF_TOKEN = process.env.HF_TOKEN || "YAHA_HF_TOKEN_PASTE_KRE";
+  const HF_TOKEN = process.env.HF_TOKEN;
 
-  if (!HF_TOKEN || HF_TOKEN === "YAHA_HF_TOKEN_PASTE_KRE") {
-    return res.status(500).send("Hugging Face Token missing!");
+  if (!HF_TOKEN) {
+    return res.status(500).send("HF_TOKEN missing in Vercel Environment Variables!");
   }
 
   try {
@@ -23,14 +22,14 @@ export default async function handler(req, res) {
     }
     const buffer = Buffer.concat(chunks);
 
-    // Free Hugging Face RMBG-1.4 Studio Quality Background Removal
     const response = await fetch(
       "https://api-inference.huggingface.co/models/briaai/RMBG-1.4",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${HF_TOKEN}`,
+          Authorization: `Bearer ${HF_TOKEN.trim()}`,
           "Content-Type": "application/octet-stream",
+          "x-wait-for-model": "true",
         },
         body: buffer,
       }
@@ -38,7 +37,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errText = await response.text();
-      return res.status(response.status).send(`HuggingFace Error: ${errText}`);
+      return res.status(response.status).send(`HuggingFace Error (${response.status}): ${errText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
