@@ -1,7 +1,7 @@
 // ==========================================
-// 🔗 AAPKA CLOUDFLARE BACKEND URL
+// 🔗 VERCEL PERMANENT API ENDPOINT
 // ==========================================
-const BACKEND_API_URL = "https://remaining-foundation-resort-portal.trycloudflare.com/remove-bg";
+const BACKEND_API_URL = "/api/remove-bg";
 
 let currentModel = 'basic';
 let isProVerified = false;
@@ -189,7 +189,7 @@ window.closeAdModal = function() {
   startRemovalProcess();
 };
 
-// Main AI Process (Clean Fast GPU Call)
+// Main AI Process
 async function startRemovalProcess() {
   if (!selectedFile) return;
 
@@ -200,20 +200,17 @@ async function startRemovalProcess() {
   if (loader) loader.classList.remove('hidden');
   if (scanner) scanner.classList.add('active');
   if (btnGenerate) btnGenerate.disabled = true;
-  if (statusSpan) statusSpan.innerText = "BiRefNet AI processing on GPU...";
+  if (statusSpan) statusSpan.innerText = "Processing Studio Quality Cutout...";
 
   try {
-    const formData = new FormData();
-    formData.append("image", selectedFile);
-
-    // Standard POST call - No blocked custom headers
     const response = await fetch(BACKEND_API_URL, {
       method: "POST",
-      body: formData
+      body: selectedFile
     });
 
     if (!response.ok) {
-      throw new Error(`GPU Server Error (${response.status})`);
+      const errText = await response.text();
+      throw new Error(`Server Error (${response.status}): ${errText}`);
     }
 
     const blobResult = await response.blob();
