@@ -189,7 +189,7 @@ window.closeAdModal = function() {
   startRemovalProcess();
 };
 
-// Main AI Process (Powered by Google Colab BiRefNet GPU)
+// Main AI Process (Clean Fast GPU Call)
 async function startRemovalProcess() {
   if (!selectedFile) return;
 
@@ -206,11 +206,9 @@ async function startRemovalProcess() {
     const formData = new FormData();
     formData.append("image", selectedFile);
 
+    // Standard POST call - No blocked custom headers
     const response = await fetch(BACKEND_API_URL, {
       method: "POST",
-      headers: {
-        "bypass-tunnel-reminder": "true"
-      },
       body: formData
     });
 
