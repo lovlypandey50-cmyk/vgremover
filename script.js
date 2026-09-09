@@ -2,10 +2,7 @@ let currentModel = 'basic';
 let isProVerified = false;
 let selectedFile = null;
 let processedImageUrl = null;
-
-// ================= SECURE VERCEL BACKEND API =================
-const BIREFNET_API_URL = "/api/remove-bg";
-// =============================================================
+let aiSegmenter = null;
 
 // Daily credits system
 const getDailyCredits = () => {
@@ -162,43 +159,6 @@ if (slider && beforeWrapper) {
   });
 }
 
-// Auto-Compress / Resize helper (Large Photos & DSLR bypass)
-function resizeImageBeforeUpload(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 1920; // Crisp Full HD maximum edge
-
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob((blob) => {
-          resolve(blob || file);
-        }, 'image/jpeg', 0.92);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 // Process Trigger
 function handleGenerate() {
   if (!selectedFile) {
@@ -225,58 +185,83 @@ function closeAdModal() {
   startRemovalProcess();
 }
 
-// Main AI Process
+// Main AI Process (BRIA RMBG-1.4 Studio Model)
 async function startRemovalProcess() {
   if (!selectedFile) return;
 
   const loader = document.getElementById('processLoader');
   const scanner = document.getElementById('scanEffect');
+  const statusSpan = document.getElementById('loaderStatusText');
 
   if (loader) loader.classList.remove('hidden');
   if (scanner) scanner.classList.add('active');
   if (btnGenerate) btnGenerate.disabled = true;
 
   try {
-    const uploadPayload = await resizeImageBeforeUpload(selectedFile);
-
-    const res = await fetch(BIREFNET_API_URL, {
-      method: "POST",
-      body: uploadPayload
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      if (res.status === 503) {
-        throw new Error('AI Model initialize ho raha hai, kripya 20 second baad dobara try karein.');
-      }
-      throw new Error(`AI Process Error (${res.status}): ${errText}`);
+    // 1. Photoroom-grade AI Model load (first time setup)
+    if (!aiSegmenter) {
+      if (statusSpan) statusSpan.innerText = "Loading Studio AI Engine (first time only)...";
+      transformers.env.allowLocalModels = false;
+      aiSegmenter = await transformers.pipeline('image-segmentation', 'briaai/RMBG-1.4');
     }
 
-    const blobResult = await res.blob();
+    if (statusSpan) statusSpan.innerText = "Extracting Fine Edges with VG AI...";
 
-    // Revoke previous blob url to prevent memory leaks
+    // 2. Original Image Load
+    const imgElement = new Image();
+    const originalObjectUrl = URL.createObjectURL(selectedFile);
+    imgElement.src = originalObjectUrl;
+    await new Promise((resolve) => { imgElement.onload = resolve; });
+
+    // 3. AI dwara high precision mask calculate
+    const result = await aiSegmenter(imgElement.src);
+    const maskCanvas = result[0].mask.toCanvas();
+
+    // 4. Studio E-commerce Cutout Rendering
+    const canvas = document.createElement("canvas");
+    canvas.width = imgElement.naturalWidth;
+    canvas.height = imgElement.naturalHeight;
+    const ctx = canvas.getContext("2d");
+
+    // Original Image draw
+    ctx.drawImage(imgElement, 0, 0);
+
+    // Alpha mask combine (Natural Sharp Edges)
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.drawImage(maskCanvas, 0, 0, imgElement.naturalWidth, imgElement.naturalHeight);
+
+    // Revoke previous URLs
+    URL.revokeObjectURL(originalObjectUrl);
     if (processedImageUrl) {
       URL.revokeObjectURL(processedImageUrl);
     }
 
-    // Show Output
-    processedImageUrl = URL.createObjectURL(blobResult);
-    const imgAfter = document.getElementById('imgAfter');
-    const compBox = document.getElementById('comparisonBox');
-    const downloadBtn = document.getElementById('btnDownload');
+    // 5. HD Transparent PNG Blob create
+    await new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        processedImageUrl = URL.createObjectURL(blob);
 
-    if (imgAfter) imgAfter.src = processedImageUrl;
-    if (compBox) compBox.classList.remove('hidden');
-    if (downloadBtn) downloadBtn.classList.remove('hidden');
+        const imgAfter = document.getElementById('imgAfter');
+        const compBox = document.getElementById('comparisonBox');
+        const downloadBtn = document.getElementById('btnDownload');
 
-    if (currentModel === 'basic') {
-      credits -= 5;
-      localStorage.setItem('vg_credits', credits.toString());
-      if (creditCountEl) creditCountEl.innerText = credits;
-    }
+        if (imgAfter) imgAfter.src = processedImageUrl;
+        if (compBox) compBox.classList.remove('hidden');
+        if (downloadBtn) downloadBtn.classList.remove('hidden');
+
+        if (currentModel === 'basic') {
+          credits -= 5;
+          localStorage.setItem('vg_credits', credits.toString());
+          if (creditCountEl) creditCountEl.innerText = credits;
+        }
+
+        resolve();
+      }, "image/png");
+    });
 
   } catch (err) {
-    alert(err.message);
+    console.error("VGRemover Process Error:", err);
+    alert('Processing Error: ' + err.message);
   } finally {
     if (loader) loader.classList.add('hidden');
     if (scanner) scanner.classList.remove('active');
